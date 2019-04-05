@@ -1,10 +1,12 @@
+#!/home/soulskrix/VirtualEnvs/BoundingBoxEnv/bin/python
 from os import listdir, mkdir
 from os.path import isfile, isdir, join
-import numpy as np
-import json
 from PIL import Image
-from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
+import numpy as np
 import cv2
+#import json
+#from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
+
 
 # __author__ = "Joseph Bradshaw"
 # __email__ = "joseph.bradshaw@outlook.com"
@@ -68,7 +70,7 @@ def main():
 	for imageName in imageFiles:
 		imRGB = Image.open('{}/{}'.format(inputPath, imageName))
 		imCV = cv2.imread('{}/{}'.format(inputPath, imageName))
-
+		
 		bgColour = getBgColour(imRGB)
 		hsvColour = np.asarray(rgbToHsv(bgColour))
 		hMin = hsvColour[0] - 5
@@ -87,7 +89,18 @@ def main():
 		mask = cv2.inRange(imHSV, BG_MIN, BG_MAX)
 		# Background was grabbed - NOT it to grab what we want
 		mask = cv2.bitwise_not(mask)
-		cv2.imshow("Captured", mask)
+		if mask.shape[0] > 1000 or mask.shape[1] > 1000:
+			imCV = cv2.resize(imCV, (0, 0), fx=0.5, fy=0.5)
+			imHSV = cv2.resize(imHSV, (0, 0), fx=0.5, fy=0.5)
+			mask = cv2.resize(mask, (0, 0), fx=0.5, fy=0.5)
+			
+		cv2.imshow(imageName + " - Original", imCV)
+		cv2.waitKey()
+		cv2.destroyAllWindows()
+		cv2.imshow(imageName + " - HSV (displayed as RGB)", imHSV)
+		cv2.waitKey()
+		cv2.destroyAllWindows()
+		cv2.imshow(imageName + " - Mask", mask)
 		cv2.waitKey()
 		cv2.destroyAllWindows()
 
