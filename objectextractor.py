@@ -4,6 +4,7 @@ from os.path import isfile, isdir, join
 from PIL import Image
 import numpy as np
 import cv2
+# imports to use in the future
 #import json
 #from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 
@@ -13,13 +14,16 @@ import cv2
 # __version__ = "1.0"
 
 
-def checkSetup(inputPath, outputPath):
+def checkSetup(inputPath, outputPath, bgPath):
 	"""Checks if program has necessary files/folders for program execution."""
 	if not isdir(inputPath):
 		raise FileNotFoundError(inputPath, 'No directory for images found')
 
 	if not isdir(outputPath):
 		mkdir(outputPath)
+
+	if not isdir(bgPath):
+		raise FileNotFoundError(bgPath, 'No directory for background images found')
 
 def getBgColour(PILImage):
 	"""Retrieves background colour by most common colour pixel detection."""
@@ -62,10 +66,14 @@ def rgbToHsv(rgb):
 
 
 def main():
+	INTERACTIVE = False
+
 	inputPath = './images'
-	outputPath = './'
-	checkSetup(inputPath, outputPath)
+	outputPath = './processed'
+	bgPath = './backgrounds'
+	checkSetup(inputPath, outputPath, bgPath)
 	imageFiles = [f for f in listdir(inputPath) if isfile(join(inputPath, f))]
+	bgFiles = [f for f in listdir(bgPath) if isfile(join(bgPath, f))]
 
 	for imageName in imageFiles:
 		imRGB = Image.open('{}/{}'.format(inputPath, imageName))
@@ -85,25 +93,24 @@ def main():
 		
 		print('bgColour {}:\n\tRGB {} | HSV {}'.format(imageName, bgColour, hsvColour))
 		
-		#TODO: Masking using cv2.inRange() to extract the background only
-		mask = cv2.inRange(imHSV, BG_MIN, BG_MAX)
-		# Background was grabbed - NOT it to grab what we want
-		mask = cv2.bitwise_not(mask)
-		if mask.shape[0] > 1000 or mask.shape[1] > 1000:
-			imCV = cv2.resize(imCV, (0, 0), fx=0.5, fy=0.5)
-			imHSV = cv2.resize(imHSV, (0, 0), fx=0.5, fy=0.5)
-			mask = cv2.resize(mask, (0, 0), fx=0.5, fy=0.5)
-			
-		cv2.imshow(imageName + " - Original", imCV)
-		cv2.waitKey()
-		cv2.destroyAllWindows()
-		cv2.imshow(imageName + " - HSV (displayed as RGB)", imHSV)
-		cv2.waitKey()
-		cv2.destroyAllWindows()
-		cv2.imshow(imageName + " - Mask", mask)
-		cv2.waitKey()
-		cv2.destroyAllWindows()
+		maskBgd = cv2.inRange(imHSV, BG_MIN, BG_MAX)
+		maskFgd = cv2.bitwise_not(maskBgd)
 
-		#cv2.imwrite('new-image5.jpg', outputImage)
+		if INTERACTIVE:
+			cv2.imshow(imageName + " - Original", imCV)
+			cv2.waitKey()
+			cv2.destroyAllWindows()
+			cv2.imshow(imageName + " - Mask", maskFgd)
+			cv2.waitKey()
+			cv2.destroyAllWindows()
+		
+		
+		imEmpty = np.zeros((imCV.shape[0], imCV.shape[1], 4), dtype=np.uint8)
+		imCV = cv2.cvtColor(imCV, cv2.COLOR_BGR2BGRA)
+		
+		outputImage = cv2.bitwise_or(imEmpty, imCV, mask=maskFgd)
+		
+		out = '{}/{}{}'.format(outputPath, imageName[:-4], '-processed.png')
+		cv2.imwrite(out, outputImage)
 
 main()
