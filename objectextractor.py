@@ -1,9 +1,12 @@
 #!/home/soulskrix/VirtualEnvs/BoundingBoxEnv/bin/python
-from os import listdir, mkdir
+from os import listdir, mkdir, remove
 from os.path import isfile, isdir, join
 from PIL import Image
 import numpy as np
 import cv2
+import multiprocessing
+import time
+
 # imports to use in the future
 #import json
 #from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
@@ -64,10 +67,36 @@ def rgbToHsv(rgb):
 
 	return (hue, sat, val)
 
+def processImages(inputPath, outputPath, imageNames, supressOutput=True):
+	for imageName in imageNames:
+		imRGB = Image.open('{}/{}'.format(inputPath, imageName))
+		imCV = cv2.imread('{}/{}'.format(inputPath, imageName))
+		# Calculate HSV thresholds for colour detection
+		bgColour = getBgColour(imRGB)
+		hsvColour = np.asarray(rgbToHsv(bgColour))
+		hMin = hsvColour[0] - 5
+		hMax = hsvColour[0] + 5
+		sMin, vMin = 50, 50
+		sMax, vMax = 255, 255
+		# Define min and max HSV thresholds
+		BG_MIN = np.array([hMin, sMin, vMin], np.uint8)
+		BG_MAX = np.array([hMax, sMax, vMax], np.uint8)
+		imHSV = cv2.cvtColor(imCV, cv2.COLOR_BGR2HSV)
+		if not supressOutput:
+			print('bgColour {}:\n\tRGB {} | HSV {}'.format(imageName, bgColour, hsvColour))
+		# Select background and create inverse to select object as masks
+		maskBgd = cv2.inRange(imHSV, BG_MIN, BG_MAX)
+		maskFgd = cv2.bitwise_not(maskBgd)
+		# Create BGRA empty transparent image for merging with object image
+		imEmpty = np.zeros((imCV.shape[0], imCV.shape[1], 4), dtype=np.uint8)
+		imCV = cv2.cvtColor(imCV, cv2.COLOR_BGR2BGRA)
+		outputImage = cv2.bitwise_or(imEmpty, imCV, mask=maskFgd)
+		# Save image to disk
+		out = '{}/{}{}'.format(outputPath, imageName[:-4], '-processed.png')
+		cv2.imwrite(out, outputImage)
 
-def main():
-	INTERACTIVE = False
-
+if __name__ == '__main__':
+	print('Object Extractor start.. ', end='')
 	inputPath = './images'
 	outputPath = './processed'
 	bgPath = './backgrounds'
@@ -75,42 +104,31 @@ def main():
 	imageFiles = [f for f in listdir(inputPath) if isfile(join(inputPath, f))]
 	bgFiles = [f for f in listdir(bgPath) if isfile(join(bgPath, f))]
 
-	for imageName in imageFiles:
-		imRGB = Image.open('{}/{}'.format(inputPath, imageName))
-		imCV = cv2.imread('{}/{}'.format(inputPath, imageName))
-		
-		bgColour = getBgColour(imRGB)
-		hsvColour = np.asarray(rgbToHsv(bgColour))
-		hMin = hsvColour[0] - 5
-		hMax = hsvColour[0] + 5
-		sMin, vMin = 50, 50
-		sMax, vMax = 255, 255
+	mid = len(imageFiles) // 2
+	start = mid // 2
+	end = mid + start
 
-		BG_MIN = np.array([hMin, sMin, vMin], np.uint8)
-		BG_MAX = np.array([hMax, sMax, vMax], np.uint8)
+	batch1 = imageFiles[:start]
+	batch2 = imageFiles[start:mid]
+	batch3 = imageFiles[mid:end]
+	batch4 = imageFiles[end:]
 
-		imHSV = cv2.cvtColor(imCV, cv2.COLOR_BGR2HSV)
-		
-		print('bgColour {}:\n\tRGB {} | HSV {}'.format(imageName, bgColour, hsvColour))
-		
-		maskBgd = cv2.inRange(imHSV, BG_MIN, BG_MAX)
-		maskFgd = cv2.bitwise_not(maskBgd)
+	p1 = multiprocessing.Process(target=processImages, args=(inputPath, outputPath, batch1))
+	p2 = multiprocessing.Process(target=processImages, args=(inputPath, outputPath, batch2))
+	p3 = multiprocessing.Process(target=processImages, args=(inputPath, outputPath, batch3))
+	p4 = multiprocessing.Process(target=processImages, args=(inputPath, outputPath, batch4))
 
-		if INTERACTIVE:
-			cv2.imshow(imageName + " - Original", imCV)
-			cv2.waitKey()
-			cv2.destroyAllWindows()
-			cv2.imshow(imageName + " - Mask", maskFgd)
-			cv2.waitKey()
-			cv2.destroyAllWindows()
-		
-		
-		imEmpty = np.zeros((imCV.shape[0], imCV.shape[1], 4), dtype=np.uint8)
-		imCV = cv2.cvtColor(imCV, cv2.COLOR_BGR2BGRA)
-		
-		outputImage = cv2.bitwise_or(imEmpty, imCV, mask=maskFgd)
-		
-		out = '{}/{}{}'.format(outputPath, imageName[:-4], '-processed.png')
-		cv2.imwrite(out, outputImage)
+	print('Jobs started..')
+	start = time.time()
+	p1.start()
+	p2.start()
+	p3.start()
+	p4.start()
 
-main()
+	p1.join()
+	p2.join()
+	p3.join()
+	p4.join()
+	end = time.time()
+	print("{} images processed from \'{}\', results can be found in \'{}\'.".format(len(imageFiles), inputPath, outputPath))
+	print("Complete in", end-start, "seconds.")
