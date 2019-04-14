@@ -81,16 +81,21 @@ def processImages(inputPath, outputPath, imageNames, suppressOutput=True):
 		# Define min and max HSV thresholds
 		BG_MIN = np.array([hMin, sMin, vMin], np.uint8)
 		BG_MAX = np.array([hMax, sMax, vMax], np.uint8)
-		imHSV = cv2.cvtColor(imCV, cv2.COLOR_BGR2HSV)
 		if not suppressOutput:
 			print('bgColour {}:\n\tRGB {} | HSV {}'.format(imageName, bgColour, hsvColour))
 		# Select background and create inverse to select object as masks
+		imHSV = cv2.cvtColor(imCV, cv2.COLOR_BGR2HSV)
 		maskBgd = cv2.inRange(imHSV, BG_MIN, BG_MAX)
 		maskFgd = cv2.bitwise_not(maskBgd)
 		# Create BGRA empty transparent image for merging with object image
 		imEmpty = np.zeros((imCV.shape[0], imCV.shape[1], 4), dtype=np.uint8)
 		imCV = cv2.cvtColor(imCV, cv2.COLOR_BGR2BGRA)
 		outputImage = cv2.bitwise_or(imEmpty, imCV, mask=maskFgd)
+		# Cropping image
+		greyscale = cv2.cvtColor(outputImage, cv2.COLOR_BGR2GRAY)
+		_, thresholded = cv2.threshold(greyscale, 0, 255, cv2.THRESH_BINARY)
+		x,y,w,h = cv2.boundingRect(thresholded)
+		outputImage = outputImage[y:y+h, x:x+w]
 		# Save image to disk
 		out = '{}/{}{}'.format(outputPath, imageName[:-4], '-processed.png')
 		cv2.imwrite(out, outputImage)
