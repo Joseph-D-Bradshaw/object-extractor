@@ -67,7 +67,7 @@ def rgbToHsv(rgb):
 
 	return (hue, sat, val)
 
-def processImages(inputPath, outputPath, imageNames, supressOutput=True):
+def processImages(inputPath, outputPath, imageNames, suppressOutput=True):
 	for imageName in imageNames:
 		imRGB = Image.open('{}/{}'.format(inputPath, imageName))
 		imCV = cv2.imread('{}/{}'.format(inputPath, imageName))
@@ -82,7 +82,7 @@ def processImages(inputPath, outputPath, imageNames, supressOutput=True):
 		BG_MIN = np.array([hMin, sMin, vMin], np.uint8)
 		BG_MAX = np.array([hMax, sMax, vMax], np.uint8)
 		imHSV = cv2.cvtColor(imCV, cv2.COLOR_BGR2HSV)
-		if not supressOutput:
+		if not suppressOutput:
 			print('bgColour {}:\n\tRGB {} | HSV {}'.format(imageName, bgColour, hsvColour))
 		# Select background and create inverse to select object as masks
 		maskBgd = cv2.inRange(imHSV, BG_MIN, BG_MAX)
