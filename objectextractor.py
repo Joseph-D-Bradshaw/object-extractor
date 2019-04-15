@@ -87,14 +87,20 @@ def processImages(inputPath, outputPath, imageNames, suppressOutput=True):
 		imHSV = cv2.cvtColor(imCV, cv2.COLOR_BGR2HSV)
 		maskBgd = cv2.inRange(imHSV, BG_MIN, BG_MAX)
 		maskFgd = cv2.bitwise_not(maskBgd)
+		# Clean up mask by only choosing to include largest contour and denoise
+		kernel = np.ones((5,5), np.uint8)
+		erosion = cv2.erode(maskFgd, kernel, iterations=1)
+		dilation = cv2.dilate(erosion, kernel, iterations=1)
+		contours, hier = cv2.findContours(dilation, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+		largestContour = max(contours, key=cv2.contourArea)
+		(x,y,w,h) = cv2.boundingRect(largestContour)
+		objCaptureMask = np.zeros(maskFgd.shape, dtype=np.uint8)
+		objCaptureMask[y:y+h, x:x+w] = maskFgd[y:y+h, x:x+w]
 		# Create BGRA empty transparent image for merging with object image
 		imEmpty = np.zeros((imCV.shape[0], imCV.shape[1], 4), dtype=np.uint8)
 		imCV = cv2.cvtColor(imCV, cv2.COLOR_BGR2BGRA)
-		outputImage = cv2.bitwise_or(imEmpty, imCV, mask=maskFgd)
-		# Cropping image
-		greyscale = cv2.cvtColor(outputImage, cv2.COLOR_BGR2GRAY)
-		_, thresholded = cv2.threshold(greyscale, 0, 255, cv2.THRESH_BINARY)
-		x,y,w,h = cv2.boundingRect(thresholded)
+		outputImage = cv2.bitwise_or(imEmpty, imCV, mask=objCaptureMask)
+		# Crop final output
 		outputImage = outputImage[y:y+h, x:x+w]
 		# Save image to disk
 		out = '{}/{}{}'.format(outputPath, imageName[:-4], '-processed.png')
