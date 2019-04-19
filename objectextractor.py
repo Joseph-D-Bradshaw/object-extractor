@@ -12,13 +12,17 @@ import time
 # __email__ = "joseph.bradshaw@outlook.com"
 
 
-def checkSetup(inputPath, outputPath):
+def checkSetup(inputPath, outputPath, bgPath=None):
 	"""Checks if program has necessary files/folders for program execution."""
 	if not isdir(inputPath):
 		raise FileNotFoundError(inputPath, 'No directory for images found')
 
 	if not isdir(outputPath):
 		mkdir(outputPath)
+
+	if bgPath:
+		if not isdir(bgPath):
+			raise FileNotFoundError(bgPath, 'No directory for background images found')	
 
 
 def getBgColour(PILImage):
