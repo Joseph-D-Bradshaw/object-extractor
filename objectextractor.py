@@ -7,17 +7,12 @@ import cv2
 import multiprocessing
 import time
 
-# imports to use in the future
-#import json
-#from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
-
 
 # __author__ = "Joseph Bradshaw"
 # __email__ = "joseph.bradshaw@outlook.com"
-# __version__ = "1.0"
 
 
-def checkSetup(inputPath, outputPath, bgPath):
+def checkSetup(inputPath, outputPath):
 	"""Checks if program has necessary files/folders for program execution."""
 	if not isdir(inputPath):
 		raise FileNotFoundError(inputPath, 'No directory for images found')
@@ -25,8 +20,6 @@ def checkSetup(inputPath, outputPath, bgPath):
 	if not isdir(outputPath):
 		mkdir(outputPath)
 
-	if not isdir(bgPath):
-		raise FileNotFoundError(bgPath, 'No directory for background images found')
 
 def getBgColour(PILImage):
 	"""Retrieves background colour by most common colour pixel detection."""
@@ -89,9 +82,9 @@ def processImages(inputPath, outputPath, imageNames, suppressOutput=True):
 		maskFgd = cv2.bitwise_not(maskBgd)
 		# Clean up mask by only choosing to include largest contour and denoise
 		kernel = np.ones((5,5), np.uint8)
-		erosion = cv2.erode(maskFgd, kernel, iterations=1)
-		dilation = cv2.dilate(erosion, kernel, iterations=1)
-		contours, hier = cv2.findContours(dilation, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+		dilation = cv2.dilate(maskFgd, kernel, iterations=1)
+		erosion = cv2.erode(dilation, kernel, iterations=1)
+		contours, hier = cv2.findContours(erosion, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 		largestContour = max(contours, key=cv2.contourArea)
 		(x,y,w,h) = cv2.boundingRect(largestContour)
 		objCaptureMask = np.zeros(maskFgd.shape, dtype=np.uint8)
@@ -110,10 +103,8 @@ if __name__ == '__main__':
 	print('Object Extractor start.. ', end='')
 	inputPath = './images'
 	outputPath = './processed'
-	bgPath = './backgrounds'
-	checkSetup(inputPath, outputPath, bgPath)
+	checkSetup(inputPath, outputPath)
 	imageFiles = [f for f in listdir(inputPath) if isfile(join(inputPath, f))]
-	bgFiles = [f for f in listdir(bgPath) if isfile(join(bgPath, f))]
 
 	mid = len(imageFiles) // 2
 	start = mid // 2
