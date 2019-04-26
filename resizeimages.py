@@ -16,36 +16,42 @@ def resize_image(files, path_to_image):
             img = cv2.resize(img, new_dim, interpolation=cv2.INTER_AREA)
             cv2.imwrite(path_to_image + '/' + f, img)
 
-images_path = './backgrounds'
-if not os.path.isdir(images_path):
-    raise FileNotFoundError('Directory \'{}\' does not exist.'.format(images_path))
+def start_resizing():
+    images_path = './backgrounds'
+    if not os.path.isdir(images_path):
+        raise FileNotFoundError('Directory \'{}\' does not exist.'.format(images_path))
 
-NUM_OF_PROCESSES = 8
+    NUM_OF_PROCESSES = 8
 
-files = os.listdir(images_path)
-files_changed = 0
-num_of_files = len(files)
-num_per_batch = math.ceil(len(files) / NUM_OF_PROCESSES)
+    files = os.listdir(images_path)
+    files_changed = 0
+    num_of_files = len(files)
+    num_per_batch = math.ceil(len(files) / NUM_OF_PROCESSES)
 
-batches = []
-while len(files) > 0:
-    batches.append(files[:num_per_batch])
-    files = files[num_per_batch:]
-del files
+    batches = []
+    while len(files) > 0:
+        batches.append(files[:num_per_batch])
+        files = files[num_per_batch:]
+    del files
 
-assert(len(batches) <= NUM_OF_PROCESSES), "Batches of jobs ({}) is not less than or equal to the max number of processes ({}).\nPer batch({})".format(len(batches), NUM_OF_PROCESSES, num_per_batch)
+    assert(len(batches) <= NUM_OF_PROCESSES), "Batches of jobs ({}) is not less than or equal to the max number of processes ({}).\nPer batch({})".format(len(batches), NUM_OF_PROCESSES, num_per_batch)
 
-print('Files to process:', num_of_files)
+    print('Files to process:', num_of_files)
 
-jobs = []
-start = time.time()
-for i in range(len(batches)):
-    p = multiprocessing.Process(target=resize_image, args=(batches[i], images_path))
-    jobs.append(p)
-    p.start()
+    jobs = []
+    start = time.time()
+    for i in range(len(batches)):
+        p = multiprocessing.Process(target=resize_image, args=(batches[i], images_path))
+        jobs.append(p)
+        p.start()
 
-for job in jobs:
-    job.join()
+    for job in jobs:
+        job.join()
 
-end = time.time()
-print('Time taken:', end-start, 'seconds')
+    end = time.time()
+    print("{} images resized in './backgrounds' to 256x256.".format(num_of_files))
+    print("Use Random Background Selector to move half of the background files to './backgrounds-to-merge'.")
+    print('Time taken:', end-start, 'seconds')
+
+if __name__ == '__main__':
+    start_resizing()

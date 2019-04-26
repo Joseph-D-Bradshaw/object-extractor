@@ -37,15 +37,14 @@ def merge_images(fg_batch, bg_batch, fg_path, bg_path, output_path, output_name,
         bg_image.save(output_path + '/' + output_name + '{}.jpg'.format(merge_num))
         merge_num += 1
 
-
-if __name__ == '__main__':
+def start_merging():
     input_path = './cleaned-processed'
     output_path = './merged'
     bg_path = './backgrounds-to-merge'
     check_setup(input_path, output_path, bg_path)
     image_files = [f for f in listdir(input_path) if isfile(join(input_path, f))]
     bg_files = [f for f in listdir(bg_path) if isfile(join(bg_path, f))]
-    assert(len(image_files) == len(bg_files)), "Number of files to merge (bg and fg) must match. fg: {} vs bg: {}".format(len(image_files), len(bg_files))
+    assert(len(image_files) == len(bg_files)), "Number of files to merge must match. '{}': {} vs '{}': {}".format(input_path, len(image_files), bg_path, len(bg_files))
 
     NUM_OF_PROCESSES = 8
 
@@ -76,5 +75,8 @@ if __name__ == '__main__':
         job.join()
 
     end = time.time()
-
     print('Time taken:', end-start)
+    print(num_of_images, "processed. Results can be found in '{}'.".format(output_path))
+
+if __name__ == '__main__':
+    start_merging()

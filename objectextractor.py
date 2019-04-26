@@ -114,7 +114,7 @@ def process_images(input_path, output_path, images_names, suppress_output=True):
 		out = '{}/{}{}'.format(output_path, image_name[:-4], '-processed.png')
 		cv2.imwrite(out, output_image)
 
-if __name__ == '__main__':
+def start_extracting():
 	print('Object Extractor start.. ', end='')
 
 	input_path = './images'
@@ -147,3 +147,7 @@ if __name__ == '__main__':
 	end = time.time()
 	print("{} images processed from \'{}\', results can be found in \'{}\'.".format(num_of_images, input_path, output_path))
 	print("Complete in", end-start, "seconds.")
+	print("Delete any defective images and place into './cleaned-processed' before merging.")
+
+if __name__ == '__main__':
+	start_extracting()
