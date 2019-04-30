@@ -23,6 +23,10 @@ y = np.array(y_test)
 test_datagen = ImageDataGenerator(rescale=1./255)
 
 model = load_model('model_keras.h5')
+TP = 0
+TN = 0
+FP = 0
+FN = 0
 correct = 0
 incorrect = 0
 label = ''
@@ -35,19 +39,26 @@ for i, batch in enumerate(test_datagen.flow(x, shuffle=False, batch_size=1)):
 
     if y[i] == 1 and label == 'robot':
         correct += 1
+        TP += 1
     if y[i] == 0 and label == 'empty':
         correct += 1
+        TN += 1
     if y[i] == 1 and label == 'empty':
         incorrect += 1
+        FN += 1
     if y[i] == 0 and label == 'robot':
         incorrect += 1
+        FP += 1
 
-    # Uncomment to see the images throughout the testing process
-    # plt.title(label)
-    # plt.imshow(batch[0])
-    # plt.show()
+
+    # Uncomment plt code to see the images throughout the testing process
+    plt.title(label)
+    plt.imshow(batch[0])
+    plt.show()
     if i+1 == test_num:
         print('Correct', correct)
         print('Incorrect', incorrect)
         print('Accuracy', str(correct/(correct+incorrect)*100) + '%')
+        print('TP:', TP, 'FP:', FP)
+        print('FN:', FN, 'TN:', TN)
         exit()
