@@ -15,21 +15,39 @@ test_dir = './dataset/testing'
 test_imgs = ['./dataset/testing/{}'.format(i) for i in os.listdir(test_dir)]
 shuffle(test_imgs)
 
-test_num = 10
-X_test, y_test = process_images(test_imgs[0:test_num], 256, 256) #y_test will be empty as 
+test_num = 1000
+X_test, y_test = process_images(test_imgs[0:test_num], 256, 256)
 x = np.array(X_test)
+y = np.array(y_test)
+
 test_datagen = ImageDataGenerator(rescale=1./255)
 
 model = load_model('model_keras.h5')
+correct = 0
+incorrect = 0
 label = ''
-for i, batch in enumerate(test_datagen.flow(x, batch_size=1)):
+for i, batch in enumerate(test_datagen.flow(x, shuffle=False, batch_size=1)):
     pred = model.predict(batch)
     if pred > 0.5:
         label = 'robot'
     else:
         label = 'empty'
-    plt.title(label)
-    plt.imshow(batch[0])
-    plt.show()
+
+    if y[i] == 1 and label == 'robot':
+        correct += 1
+    if y[i] == 0 and label == 'empty':
+        correct += 1
+    if y[i] == 1 and label == 'empty':
+        incorrect += 1
+    if y[i] == 0 and label == 'robot':
+        incorrect += 1
+
+    # Uncomment to see the images throughout the testing process
+    # plt.title(label)
+    # plt.imshow(batch[0])
+    # plt.show()
     if i+1 == test_num:
-        break
+        print('Correct', correct)
+        print('Incorrect', incorrect)
+        print('Accuracy', str(correct/(correct+incorrect)*100) + '%')
+        exit()
