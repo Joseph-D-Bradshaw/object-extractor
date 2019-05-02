@@ -52,9 +52,11 @@ for i, batch in enumerate(test_datagen.flow(x, shuffle=False, batch_size=1)):
 
 
     # Uncomment plt code to see the images throughout the testing process
-    plt.title(label)
-    plt.imshow(batch[0])
-    plt.show()
+    if i % 100 == 0:
+        print('is robot') if y[i] == 1 else print('is empty')
+        plt.title(label)
+        plt.imshow(batch[0])
+        plt.show()
     if i+1 == test_num:
         print('Correct', correct)
         print('Incorrect', incorrect)
