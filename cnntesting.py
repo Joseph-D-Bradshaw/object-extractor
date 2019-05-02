@@ -51,7 +51,7 @@ for i, batch in enumerate(test_datagen.flow(x, shuffle=False, batch_size=1)):
         FP += 1
 
 
-    # Uncomment plt code to see the images throughout the testing process
+    # Uncomment plot code below to see the images throughout the testing process
     if i % 100 == 0:
         print('is robot') if y[i] == 1 else print('is empty')
         plt.title(label)
