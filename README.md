@@ -3,15 +3,16 @@
 From when I was a final year student.
 
 A series of programs used to create synthetic data to artificially inflate existing datasets used in machine learning.
-Uses opencv and chromakeying techniques to remove the object to recognise from video output, and is further processed into synthetic
-data by blending different permutations of the extracted object with various background images sourced online.
+Uses OpenCV and chroma-keying techniques to remove an object to recognise from video output. This is further processed into synthetic
+data by blending different permutations of said extracted object with various background images sourced online.
 
-These images are used to train a convolutional neural network to perform a binary classification task - to recognise whether the object
+These images are used to train a convolutional neural network to perform a binary classification task; to recognise whether the object
 exists within the image or not.
 
 This project was inspired from the need to do image recognition on objects that are unique/do not have many images online, in other-words,
-where one cannot source a large dataset. A small paper was written with this program the methodology for producing the data/training
-the model.
+where one cannot source a large dataset. Most hobbyists do not have the luxury of being able to produce large datasets and are limited by
+what they can find online, or to painstakingly produce their own with a lot of data capturing. A small paper was written with this program 
+the methodology for producing the data/training the model.
 
 To summarise the findings from this experiment, the results indicate that synthetic data can aid in training for image recognition. The 
 dataset cannot be completely synthetic, and must be mostly real. But there is a benefit beyond some threshold from having some synthetic
