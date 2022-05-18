@@ -1,5 +1,10 @@
 # Object Extractor
 
+See the objectextractordemo.py for a demo.
+See objectextractor.py for the main extractor, all other programs are tools used to aid the synthetic dataset capture + training.
+
+---
+
 From when I was a final year student.
 
 A series of programs used to create synthetic data to artificially inflate existing datasets used in machine learning.
@@ -20,4 +25,4 @@ data added. Having complete synthetic data causes the model to learn to spot oth
 
 If given the time to experiment again in the future, I would repeat the experiment with two key differences:
 - Produce better synthetic data using the HSV colour model to add different lighting conditions as a new factor in the images
-- To use a model already trained to recognise one things, and test my methodology using transfer learning as opposed to learning from scratch.
+- To use a model already trained to recognise something and test my methodology using transfer learning as opposed to learning from scratch.
